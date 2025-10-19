@@ -1271,17 +1271,47 @@ const getIndexHTML = (env) => {
         fileUpload.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
-                const file = e.target.files[0];
-                if (file.size > (window.APP_CONFIG?.MAX_FILE_SIZE_BYTES || (90 * 1024 * 1024))) {
-                    const limitMB = Math.round((window.APP_CONFIG?.MAX_FILE_SIZE_BYTES || (90 * 1024 * 1024)) / 1024 / 1024);
-                    alert('文件大小超过 ' + limitMB + 'MB 限制');
-                    return;
-                }
-                currentFileData = file;
-                fileUpload.innerHTML = '📄 <span style="word-wrap: break-word; overflow-wrap: break-word; max-width: 100%; display: inline-block;">' + file.name + '</span><br><small>' + formatFileSize(file.size) + '</small>';
-                hideUploadProgress();
+                handleFileSelect(e.target.files[0]);
             }
         });
+
+        // 拖拽上传功能
+        fileUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            fileUpload.classList.add('dragover');
+        });
+
+        fileUpload.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            fileUpload.classList.remove('dragover');
+        });
+
+        fileUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            fileUpload.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        // 统一的文件处理函数
+        function handleFileSelect(file) {
+            if (file.size > (window.APP_CONFIG?.MAX_FILE_SIZE_BYTES || (90 * 1024 * 1024))) {
+                const limitMB = Math.round((window.APP_CONFIG?.MAX_FILE_SIZE_BYTES || (90 * 1024 * 1024)) / 1024 / 1024);
+                alert('文件大小超过 ' + limitMB + 'MB 限制');
+                return;
+            }
+            currentFileData = file;
+            
+            // 显示文件信息，等待用户点击生成提取码按钮
+            fileUpload.innerHTML = '📄 <span style="word-wrap: break-word; overflow-wrap: break-word; max-width: 100%; display: inline-block;">' + file.name + '</span><br><small>' + formatFileSize(file.size) + '</small><br><small style="color: #667eea;">✅ 文件已选择，点击下方按钮开始上传</small>';
+            hideUploadProgress();
+        }
         
         function formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';
